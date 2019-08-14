@@ -17,6 +17,6 @@ resource "aws_db_instance" "postgres_db" {
 	instance_class = "db.t2.micro"
 	name = "postgres_database"
 	username = "jschnab"
-
 	password = "${var.db_password}"
+	skip_final_snapshot = true
 }

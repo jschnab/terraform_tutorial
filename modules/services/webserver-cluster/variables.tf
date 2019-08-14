@@ -1,13 +1,15 @@
+variable "cluster_name" {
+	description = "name to use for all cluster resources"
+}
+
 variable "db_remote_state_bucket" {
 	description = "name of the S3 bucket used for the database's remote state storage"
 	type = string
-	default = "terraform-state-jschnab11435"
 }
 
 variable "db_remote_state_key" {
 	description = "name of the key in the S3 bucket used for the db's remote state storage"
 	type = string
-	default = "stage/services/webcluster/terraform.tfstate"
 }
 
 variable "server_port" {
@@ -31,4 +33,19 @@ variable "alb_security_group_name" {
 	description = "name of the security group for the application load balancer"
 	type = string
 	default = "terraform_app_lb"
+}
+
+variable "instance_type" {
+	description = "type of the instance to run (e.g. t2.micro)"
+	type = string
+}
+
+variable "min_size" {
+	description = "minimum number of EC2 instances in the ASG"
+	type = number
+}
+
+variable "max_size" {
+	description = "maximum number of EC2 instances in the ASG"
+	type = number
 }
