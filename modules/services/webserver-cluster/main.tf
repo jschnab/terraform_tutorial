@@ -42,6 +42,38 @@ resource "aws_autoscaling_group" "asg_test" {
 		value = "${var.cluster_name}-asg"
 		propagate_at_launch = true
 	}
+
+	dynamic "tag" {
+		for_each = var.custom_tags
+
+		content {
+			key = tag.key
+			value = tag.value
+			propagate_at_launch = true
+		}
+	}
+}
+
+resource "aws_autoscaling_schedule" "scale_out_business_hours" {
+	count = var.enable_autoscaling ? 1 : 0
+
+	scheduled_action_name = "${var.cluster_name}-scale-out-during-business-hours"
+	min_size = 2
+	max_size = 10
+	desired_capacity = 10
+	recurrence = "0 9 * * *"
+	autoscaling_group_name = aws_autoscaling_group.asg_test.name
+}
+
+resource "aws_autoscaling_schedule" "scale_in_at_night" {
+	count = var.enable_autoscaling ? 1 : 0
+
+	scheduled_action_name = "${var.cluster_name}-scale-in-at-night"
+	min_size = 2
+	max_size = 10
+	desired_capacity = 2
+	recurrence = "0 17 * * *"
+	autoscaling_group_name = aws_autoscaling_group.asg_test.name
 }
 
 resource "aws_security_group" "sg_instances" {
@@ -146,3 +178,34 @@ data "terraform_remote_state" "database" {
 	}
 }
 
+resource "aws_cloudwatch_metric_alarm" "high_cpu_utilization" {
+	alarm_name = "${var.cluster_name}-high-cpu-utilization"
+	namespace = "AWS/EC2"
+	metric_name = "CPUUtilization"
+
+	dimensions = {AutoScalingGroupName = aws_autoscaling_group.asg_test.name}
+
+	comparison_operator = "GreaterThanThreshold"
+	evaluation_periods = 1
+	period = 300
+	statistic = "Average"
+	threshold = 90
+	unit = "Percent"
+}
+
+resource "aws_cloudwatch_metric_alarm" "low_cpu_credit_balance" {
+	count = format("%.1s", var.instance_type) == "t" ? 1 : 0
+
+	alarm_name = "${var.cluster_name}-low-cpu-credit-balance"
+	namespace = "AWS/EC2"
+	metric_name = "CPUCreditBalance"
+
+	dimensions = {AutoScalingGroupName = aws_autoscaling_group.asg_test.name}
+
+	comparison_operator = "LessThanThreshold"
+	evaluation_periods = 1
+	period = 300
+	statistic = "Minimum"
+	threshold = 10
+	unit = "Count"
+}

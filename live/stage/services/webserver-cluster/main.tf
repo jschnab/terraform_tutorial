@@ -11,7 +11,7 @@ provider "aws" {
 }
 
 module "webserver_cluster" {
-	source = "github.com/jschnab/terraform_modules//services/webserver-cluster?ref=v0.0.1"
+	source = "../../../../modules/services/webserver-cluster"
 
 	cluster_name = "webserver-stage"
 	db_remote_state_bucket = "terraform-state-jschnab11435"
@@ -20,6 +20,12 @@ module "webserver_cluster" {
 	instance_type = "t2.micro"
 	min_size = 2
 	max_size = 2
+	enable_autoscaling = false
+
+	custom_tags = {
+		Owner = "jon-schnaps"
+		DeployedBy = "terraform"
+	}
 }
 
 resource "aws_security_group_rule" "allow_testing_inbound" {
